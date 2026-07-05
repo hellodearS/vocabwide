@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>단어 달리기 - 팀 대항전</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --a-bg: #16233F;
+    --a-bg2: #1C2E52;
+    --a-accent: #3E7BFA;
+    --b-bg: #3F131B;
+    --b-bg2: #521A24;
+    --b-accent: #FF5C6C;
+    --ink: #1D3557;
+    --grass: #588157;
+    --grass-dark: #3f6142;
+    --sky: #F1FAEE;
+    --white: #FFFFFF;
+    --gold: #FFC94A;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--sky);
+    color: var(--ink);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+  }
+  .wrap{
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 16px 16px 28px;
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom: 14px;
+  }
+  .logo{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size: 24px;
+    color: var(--grass-dark);
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .logo span.sub{
+    font-family:'Noto Sans KR', sans-serif;
+    font-weight:500;
+    font-size: 12px;
+    color: #6b7a6c;
+    display:block;
+  }
+  .icon-btn{
+    background: var(--white);
+    border: 2px solid #dfe7de;
+    border-radius: 12px;
+    width: 42px;
+    height: 42px;
+    font-size: 20px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .icon-btn:hover{ border-color: var(--grass); }
+  .icon-btn:active{ transform: scale(0.92); }
+  .icon-btn:focus-visible{ outline: 3px solid var(--grass); outline-offset:2px; }
+
+  /* ---------- Arena (two panels) ---------- */
+  .arena{
+    display:flex;
+    gap: 14px;
+  }
+  @media (max-width: 760px){
+    .arena{ flex-direction:column; }
+  }
+  .panel{
+    flex:1;
+    border-radius: 22px;
+    padding: 16px 16px 20px;
+    position:relative;
+    overflow:hidden;
+    min-width:0;
+  }
+  .panel.teamA{ background: linear-gradient(160deg, var(--a-bg), var(--a-bg2)); }
+  .panel.teamB{ background: linear-gradient(160deg, var(--b-bg), var(--b-bg2)); }
+
+  .panel-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    color: var(--white);
+    font-family:'Baloo 2', sans-serif;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .team-name{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .dot{ font-size: 14px; }
+  .timer{
+    font-variant-numeric: tabular-nums;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--gold);
+    background: rgba(0,0,0,0.22);
+    padding: 4px 12px;
+    border-radius: 999px;
+  }
+  .round-tag{
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.75);
+    background: rgba(0,0,0,0.2);
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+
+  .mini-track{
+    position:relative;
+    height: 30px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.12);
+    margin-bottom: 14px;
+    overflow:hidden;
+  }
+  .mini-runner{
+    position:absolute;
+    top:50%;
+    left: 3%;
+    transform: translate(-50%,-50%);
+    font-size: 20px;
+    transition: left 0.5s cubic-bezier(.34,1.56,.64,1);
+  }
+  .mini-flag{
+    position:absolute;
+    right: 4px;
+    top:50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+  }
+
+  .prompt-box{
+    background: rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 18px 12px;
+    text-align:center;
+    margin-bottom: 14px;
+  }
+  .prompt-label{
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 4px;
+    font-weight:500;
+  }
+  .prompt-word{
+    font-family:'Noto Sans KR', sans-serif;
+    font-weight: 900;
+    font-size: 30px;
+    color: var(--white);
+    word-break: keep-all;
+    line-height:1.25;
+  }
+  .prompt-word.en{ font-family:'Baloo 2', sans-serif; font-weight:800; }
+
+  .opt-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    max-height: 46vh;
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+  .opt-btn{
+    background: rgba(255,255,255,0.9);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 12px 8px;
+    font-family:'Noto Sans KR', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    cursor:pointer;
+    text-align:center;
+    line-height:1.3;
+    min-height: 52px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition: transform .08s ease, background-color .15s ease;
+  }
+  .opt-btn:hover:not(:disabled){ transform: translateY(-1px); }
+  .opt-btn:active:not(:disabled){ transform: scale(0.96); }
+  .opt-btn:focus-visible{ outline: 3px solid var(--gold); outline-offset: 2px; }
+  .opt-btn.wrong-flash{ background: #FF5C6C; color: var(--white); }
+  .opt-btn.correct-flash{ background: var(--grass); color: var(--white); }
+  .opt-btn:disabled{ opacity:0.5; cursor:default; }
+
+  .panel-done-overlay{
+    position:absolute;
+    inset:0;
+    background: rgba(10,14,26,0.86);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    color: var(--white);
+    padding: 20px;
+    opacity:0;
+    pointer-events:none;
+    transition: opacity .25s ease;
+  }
+  .panel-done-overlay.show{ opacity:1; pointer-events:auto; }
+  .panel-done-overlay .emoji{ font-size: 44px; margin-bottom: 8px; }
+  .panel-done-overlay .msg{ font-family:'Baloo 2',sans-serif; font-size: 22px; font-weight:800; margin-bottom:6px; }
+  .panel-done-overlay .time{ font-size: 30px; font-weight:900; color: var(--gold); font-variant-numeric: tabular-nums; }
+
+  .next-person-overlay{
+    position:absolute;
+    inset:0;
+    background: rgba(8,12,24,0.94);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding: 20px;
+    opacity:0;
+    pointer-events:none;
+    transition: opacity .2s ease;
+  }
+  .next-person-overlay.show{ opacity:1; pointer-events:auto; }
+  .next-person-overlay .np-title{
+    font-family:'Baloo 2', sans-serif;
+    font-weight: 800;
+    font-size: 30px;
+    color: var(--gold);
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+  }
+  .next-person-overlay .np-sub{
+    font-family:'Noto Sans KR', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 22px;
+  }
+  .np-touch-btn{
+    background: var(--gold);
+    color: #241900;
+    border: none;
+    border-radius: 999px;
+    padding: 16px 30px;
+    font-family:'Noto Sans KR', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    animation: np-pulse 1.4s ease-in-out infinite;
+  }
+  .np-touch-btn:active{ transform: scale(0.95); }
+  .np-touch-btn:focus-visible{ outline: 3px solid var(--white); outline-offset: 3px; }
+  @keyframes np-pulse{
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .np-touch-btn{ animation: none; }
+  }
+
+  /* ---------- Start / winner overlay ---------- */
+  .stage-overlay{
+    position:fixed; inset:0;
+    background: rgba(10,14,26,0.72);
+    display:flex; align-items:center; justify-content:center;
+    padding: 16px;
+    z-index: 55;
+  }
+  .stage-card{
+    background: var(--white);
+    border-radius: 22px;
+    padding: 34px 26px;
+    max-width: 420px;
+    width:100%;
+    text-align:center;
+  }
+  .stage-card .emoji{ font-size: 50px; margin-bottom: 8px; }
+  .stage-card h2{
+    font-family:'Baloo 2', sans-serif;
+    font-size: 26px;
+    margin: 0 0 6px;
+    color: var(--ink);
+  }
+  .stage-card p{ color:#7a8a7b; font-size:14px; margin: 0 0 20px; line-height:1.5; }
+  .win-rows{ display:flex; flex-direction:column; gap:10px; margin-bottom: 22px; }
+  .win-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: var(--sky);
+    font-weight: 700;
+  }
+  .win-row.winner{ background: #FFF3D6; border: 2px solid var(--gold); }
+  .win-row .t-name{ display:flex; align-items:center; gap:8px; }
+  .win-row .t-time{ font-variant-numeric: tabular-nums; }
+  .btn{
+    font-family:'Noto Sans KR', sans-serif;
+    font-weight:700;
+    font-size: 15px;
+    border-radius: 12px;
+    padding: 13px 22px;
+    cursor:pointer;
+    border: none;
+    width:100%;
+  }
+  .btn:active{ transform: scale(0.97); }
+  .btn:focus-visible{ outline: 3px solid var(--ink); outline-offset: 2px; }
+  .btn-primary{ background: var(--grass); color: var(--white); }
+  .btn-secondary{ background: var(--sky); color: var(--ink); border: 2px solid #dfe7de; margin-top:8px; }
+
+  /* ---------- Settings modal ---------- */
+  .modal{
+    background: var(--white);
+    border-radius: 20px;
+    padding: 24px 22px;
+    max-width: 480px;
+    width:100%;
+    max-height: 90vh;
+    overflow-y:auto;
+    text-align:left;
+  }
+  .modal h2{ font-family:'Baloo 2', sans-serif; font-size: 22px; margin: 0 0 4px; color: var(--ink); }
+  .modal p.hint{ font-size: 13px; color:#7a8a7b; margin: 0 0 16px; line-height:1.5; }
+  .field{ margin-bottom: 16px; }
+  .field label{ display:block; font-size: 13px; font-weight: 700; margin-bottom: 6px; color: var(--ink); }
+  textarea{
+    width:100%; min-height: 150px;
+    border-radius: 12px; border: 2px solid #dfe7de;
+    padding: 12px; font-family: 'Noto Sans KR', monospace; font-size: 14px; resize: vertical;
+  }
+  select, input[type=number]{
+    width:100%; padding: 10px 12px; border-radius: 12px;
+    border: 2px solid #dfe7de; font-family:'Noto Sans KR', sans-serif;
+    font-size: 14px; background: var(--white);
+  }
+  textarea:focus-visible, select:focus-visible, input:focus-visible{ outline: 3px solid var(--grass); }
+  .row-2{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .fixed-note{
+    background: var(--sky);
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: var(--ink);
+    font-weight:600;
+    margin-bottom: 16px;
+  }
+  .modal-actions{ display:flex; gap:10px; margin-top: 6px; }
+  .modal-actions .btn{ flex:1; width:auto; }
+  .error-msg{ color: #E63946; font-size: 13px; font-weight: 700; margin: -8px 0 12px; display:none; }
+
+  /* ---------- Home screen ---------- */
+  .home-buttons{ display:flex; flex-direction:column; gap:14px; margin: 6px 0 4px; }
+  .home-btn{
+    padding:18px 20px; border-radius:16px; border:none; cursor:pointer;
+    font-family:'Noto Sans KR',sans-serif; font-weight:800; font-size:16px;
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    color:var(--white);
+  }
+  .home-btn:active{ transform: scale(0.97); }
+  .home-btn:focus-visible{ outline: 3px solid var(--ink); outline-offset: 2px; }
+  .home-btn.blue{ background: linear-gradient(120deg,#3E7BFA,#6C8CFF); }
+  .home-btn.pink{ background: linear-gradient(120deg,#C24CF2,#FF5C9E); }
+  .home-quick-link{
+    margin-top:16px; background:none; border:none; color:#8a9a8b;
+    font-size:13px; text-decoration:underline; cursor:pointer; width:100%;
+  }
+
+  /* ---------- Saved set list ---------- */
+  .search-row, .filter-row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+  .set-list{
+    display:flex; flex-direction:column; gap:10px;
+    max-height:44vh; overflow-y:auto; margin-bottom:14px; text-align:left;
+    padding-right: 2px;
+  }
+  .set-card{ background:var(--sky); border-radius:14px; padding:14px 16px; }
+  .set-card .set-name{ font-weight:800; font-size:15px; margin-bottom:3px; color:var(--ink); }
+  .set-card .set-meta{ font-size:12px; color:#7a8a7b; margin-bottom:10px; }
+  .set-card .set-actions{ display:flex; flex-wrap:wrap; gap:6px; }
+  .chip-btn{
+    border:none; border-radius:8px; padding:8px 11px; font-size:12px; font-weight:800;
+    cursor:pointer; color:#fff; font-family:'Noto Sans KR',sans-serif;
+  }
+  .chip-btn:focus-visible{ outline: 2px solid var(--ink); outline-offset: 2px; }
+  .chip-btn.c-select{ background: var(--grass); }
+  .chip-btn.c-view{ background: #3E7BFA; }
+  .chip-btn.c-copy{ background: #1C9C9C; }
+  .chip-btn.c-edit{ background: #E9A23B; }
+  .chip-btn.c-delete{ background: #E63946; }
+  .loading-text, .empty-text{ text-align:center; color:#8a9a8b; font-size:13px; padding:18px 0; }
+
+  /* ---------- Word set create/edit form ---------- */
+  .word-row{ display:grid; grid-template-columns:1fr 1fr auto; gap:8px; margin-bottom:8px; align-items:center; }
+  .word-row input{
+    padding:10px 12px; border-radius:10px; border:2px solid #dfe7de;
+    font-size:14px; font-family:'Noto Sans KR',sans-serif; width:100%;
+  }
+  .word-row input:focus-visible{ outline: 3px solid var(--grass); }
+  .remove-row-btn{
+    background:#f8d7da; color:#c0293a; border:none; border-radius:8px;
+    width:36px; height:36px; cursor:pointer; font-weight:800; font-size:16px;
+  }
+  .remove-row-btn:focus-visible{ outline: 2px solid var(--ink); }
+  .add-row-btn{
+    width:100%; padding:10px; border-radius:10px; border:2px dashed #cfe0cf;
+    background:none; color:var(--grass-dark); font-weight:700; cursor:pointer;
+    font-family:'Noto Sans KR',sans-serif; font-size:14px; margin-bottom:6px;
+  }
+  .add-row-btn:disabled{ opacity:0.5; cursor:default; }
+  .word-rows-wrap{ max-height:32vh; overflow-y:auto; padding-right:2px; margin-bottom:8px; }
+  .selected-set-tag{
+    display:inline-block; background: var(--sky); color: var(--ink);
+    font-size: 13px; font-weight:700; padding: 6px 14px; border-radius: 999px;
+    margin-bottom: 14px;
+  }
+  .toast-note{
+    position:fixed; top:20px; left:50%; transform:translateX(-50%);
+    background: var(--ink); color:#fff; padding:10px 20px; border-radius:999px;
+    font-weight:700; font-size:14px; z-index: 70; opacity:0; transition:opacity .2s ease;
+    pointer-events:none;
+  }
+  .toast-note.show{ opacity:1; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="topbar">
+    <div class="logo">🏃 단어 달리기
+      <span class="sub">블루팀 vs 레드팀 전자칠판 대항전</span>
+    </div>
+    <button class="icon-btn" id="settingsBtn" title="홈으로" aria-label="홈 화면으로 이동">🏠</button>
+  </div>
+
+  <div class="arena">
+    <div class="panel teamA" id="panelA">
+      <div class="panel-header">
+        <div class="team-name"><span class="dot">🔵</span> 블루팀</div>
+        <div class="round-tag" id="roundA">0/0번째</div>
+        <div class="timer" id="timerA">00:00.0</div>
+      </div>
+      <div class="mini-track">
+        <div class="mini-runner" id="runnerA">🏃</div>
+        <div class="mini-flag">🏁</div>
+      </div>
+      <div class="prompt-box">
+        <div class="prompt-label" id="promptLabelA">문제를 기다리는 중</div>
+        <div class="prompt-word" id="wordA">-</div>
+      </div>
+      <div class="opt-grid" id="optionsA"></div>
+      <div class="panel-done-overlay" id="doneA">
+        <div class="emoji">✅</div>
+        <div class="msg">블루팀 완료!</div>
+        <div class="time" id="doneTimeA">00:00.0</div>
+      </div>
+      <div class="next-person-overlay" id="nextPersonA">
+        <div class="np-title">Next Person!</div>
+        <div class="np-sub" id="nextPersonSubA">다음 주자 준비!</div>
+        <button class="np-touch-btn" id="nextPersonBtnA">👋 터치하세요</button>
+      </div>
+    </div>
+
+    <div class="panel teamB" id="panelB">
+      <div class="panel-header">
+        <div class="team-name"><span class="dot">🔴</span> 레드팀</div>
+        <div class="round-tag" id="roundB">0/0번째</div>
+        <div class="timer" id="timerB">00:00.0</div>
+      </div>
+      <div class="mini-track">
+        <div class="mini-runner" id="runnerB">🏃</div>
+        <div class="mini-flag">🏁</div>
+      </div>
+      <div class="prompt-box">
+        <div class="prompt-label" id="promptLabelB">문제를 기다리는 중</div>
+        <div class="prompt-word" id="wordB">-</div>
+      </div>
+      <div class="opt-grid" id="optionsB"></div>
+      <div class="panel-done-overlay" id="doneB">
+        <div class="emoji">✅</div>
+        <div class="msg">레드팀 완료!</div>
+        <div class="time" id="doneTimeB">00:00.0</div>
+      </div>
+      <div class="next-person-overlay" id="nextPersonB">
+        <div class="np-title">Next Person!</div>
+        <div class="np-sub" id="nextPersonSubB">다음 주자 준비!</div>
+        <button class="np-touch-btn" id="nextPersonBtnB">👋 터치하세요</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Start screen -->
+<div class="stage-overlay" id="startOverlay" style="display:none;">
+  <div class="stage-card">
+    <div class="emoji">🏁</div>
+    <h2>단어 달리기 준비!</h2>
+    <div class="selected-set-tag" id="selectedSetTag">선택된 세트: 기본 단어 세트</div>
+    <p>팀 인원수를 정하고 시작 버튼을 누르면<br>두 팀이 동시에 출발해요. (1인당 3문제 고정)</p>
+    <div class="modal" style="padding:0; max-height:none; overflow:visible;">
+      <div class="row-2">
+        <div class="field">
+          <label for="teamASizeInput">🔵 블루팀 인원수 (최대 30)</label>
+          <input type="number" id="teamASizeInput" min="1" max="30" value="5">
+        </div>
+        <div class="field">
+          <label for="teamBSizeInput">🔴 레드팀 인원수 (최대 30)</label>
+          <input type="number" id="teamBSizeInput" min="1" max="30" value="5">
+        </div>
+      </div>
+      <div class="field">
+        <label for="modeSelectStart">퀴즈 방향</label>
+        <select id="modeSelectStart">
+          <option value="ko2en">한글 → 영어 (뜻을 보고 단어 선택)</option>
+          <option value="en2ko">영어 → 한글 (단어를 보고 뜻 선택)</option>
+        </select>
+      </div>
+      <div class="fixed-note">1인당 문제 수: <b>3문제</b> (고정)</div>
+      <div class="error-msg" id="startErrorMsg">단어가 4개 미만입니다. 단어세트를 다시 선택해주세요.</div>
+    </div>
+    <button class="btn btn-primary" id="raceStartBtn">🏁 두 팀 동시 시작!</button>
+    <button class="btn btn-secondary" id="backToHomeFromStartBtn">🔁 다른 단어세트 선택</button>
+  </div>
+</div>
+
+<!-- Winner overlay -->
+<div class="stage-overlay hidden" id="winnerOverlay" style="display:none;">
+  <div class="stage-card">
+    <div class="emoji" id="winnerEmoji">🏆</div>
+    <h2 id="winnerTitle">블루팀 승리!</h2>
+    <p id="winnerSub">두 팀 모두 완주했습니다</p>
+    <div class="win-rows">
+      <div class="win-row" id="winRowA">
+        <div class="t-name">🔵 블루팀</div>
+        <div class="t-time" id="winTimeA">00:00.0</div>
+      </div>
+      <div class="win-row" id="winRowB">
+        <div class="t-name">🔴 레드팀</div>
+        <div class="t-time" id="winTimeB">00:00.0</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="playAgainBtn">🔁 다시 달리기</button>
+    <button class="btn btn-secondary" id="winnerHomeBtn">🏠 홈으로 (다른 세트 선택)</button>
+  </div>
+</div>
+
+<!-- Home screen -->
+<div class="stage-overlay" id="homeOverlay" style="display:flex;">
+  <div class="stage-card">
+    <div class="emoji">🏃</div>
+    <h2>단어 달리기!</h2>
+    <p>무엇을 하시겠어요?</p>
+    <div class="home-buttons">
+      <button class="home-btn blue" id="goCreateBtn">📝 새 단어세트 만들기</button>
+      <button class="home-btn pink" id="goSavedBtn">📚 저장된 단어세트</button>
+    </div>
+    <button class="home-quick-link" id="quickStartBtn">또는 기본 단어로 빠른 시작 →</button>
+  </div>
+</div>
+
+<!-- Create / Edit set -->
+<div class="stage-overlay" id="createOverlay" style="display:none;">
+  <div class="modal">
+    <h2 id="createFormTitle">📝 단어세트 만들기</h2>
+    <p class="hint">단어는 최소 4개, 최대 30개까지 입력할 수 있어요. 비밀번호는 나중에 이 세트를 수정하거나 삭제할 때 필요해요.</p>
+    <div class="field">
+      <label for="setNameInput">세트 이름</label>
+      <input type="text" id="setNameInput" placeholder="예: 5학년 Unit 3">
+    </div>
+    <div class="row-2">
+      <div class="field">
+        <label for="setGradeSelect">학년</label>
+        <select id="setGradeSelect">
+          <option value="">선택하세요</option>
+          <option>1학년</option><option>2학년</option><option>3학년</option>
+          <option>4학년</option><option>5학년</option><option>6학년</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="setPublisherSelect">출판사</label>
+        <select id="setPublisherSelect">
+          <option value="">선택하세요</option>
+          <option>천재교육</option><option>비상교육</option><option>미래엔</option>
+          <option>YBM</option><option>동아출판</option><option>기타</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label for="setCreatorInput">제작자 (닉네임, 이름 등)</label>
+      <input type="text" id="setCreatorInput" placeholder="예: 김선생님">
+    </div>
+    <div class="field">
+      <label for="setPasswordInput">비밀번호 (수정/삭제 보호용)</label>
+      <input type="text" id="setPasswordInput" placeholder="예: 1234">
+    </div>
+    <div class="field">
+      <label>단어 입력 (한글 뜻 / 영어 단어)</label>
+      <div class="word-rows-wrap" id="wordRowsWrap"></div>
+      <button class="add-row-btn" id="addWordRowBtn">+ 단어 추가</button>
+      <div class="error-msg" id="createErrorMsg">필수 항목을 확인해주세요. (이름·제작자·비밀번호, 단어 4개 이상)</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="cancelCreateBtn">취소</button>
+      <button class="btn btn-primary" id="saveSetBtn">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Saved sets list -->
+<div class="stage-overlay" id="savedListOverlay" style="display:none;">
+  <div class="modal">
+    <h2>📚 저장된 단어세트</h2>
+    <div class="search-row">
+      <input type="text" id="searchNameInput" placeholder="세트 이름으로 검색...">
+      <input type="text" id="searchCreatorInput" placeholder="제작자 이름으로 검색...">
+    </div>
+    <div class="filter-row">
+      <select id="filterGrade">
+        <option value="">전체 학년</option>
+        <option>1학년</option><option>2학년</option><option>3학년</option>
+        <option>4학년</option><option>5학년</option><option>6학년</option>
+      </select>
+      <select id="filterPublisher">
+        <option value="">전체 출판사</option>
+        <option>천재교육</option><option>비상교육</option><option>미래엔</option>
+        <option>YBM</option><option>동아출판</option><option>기타</option>
+      </select>
+    </div>
+    <div class="set-list" id="setList"><div class="loading-text">불러오는 중...</div></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="backHomeFromListBtn">뒤로</button>
+    </div>
+  </div>
+</div>
+
+<!-- Word preview (read-only) -->
+<div class="stage-overlay" id="wordPreviewOverlay" style="display:none;">
+  <div class="modal">
+    <h2 id="previewSetName">단어 보기</h2>
+    <div class="set-list" id="previewWordList" style="max-height:50vh;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="closePreviewBtn">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- Password prompt (edit / delete) -->
+<div class="stage-overlay" id="passwordOverlay" style="display:none;">
+  <div class="stage-card">
+    <div class="emoji">🔒</div>
+    <h2 id="passwordPromptTitle">비밀번호 확인</h2>
+    <p id="passwordPromptSub">이 단어세트의 비밀번호를 입력해주세요.</p>
+    <div class="field" style="text-align:left;">
+      <input type="password" id="passwordPromptInput" placeholder="비밀번호">
+      <div class="error-msg" id="passwordErrorMsg">비밀번호가 일치하지 않습니다.</div>
+    </div>
+    <button class="btn btn-primary" id="passwordConfirmBtn">확인</button>
+    <button class="btn btn-secondary" id="passwordCancelBtn">취소</button>
+  </div>
+</div>
+
+<div class="toast-note" id="toastNote"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyA_cyFwbFlHjKxyGcXlpvnbHsjf0uUBfhc",
+    authDomain: "vocabwide-73eaf.firebaseapp.com",
+    databaseURL: "https://vocabwide-73eaf-default-rtdb.firebaseio.com",
+    projectId: "vocabwide-73eaf",
+    storageBucket: "vocabwide-73eaf.firebasestorage.app",
+    messagingSenderId: "247097624708",
+    appId: "1:247097624708:web:63f0315a9c7821ab9ddad1"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const vocabDb = firebase.database();
+</script>
+<script>
+(function(){
+  const DEFAULT_WORDS = [
+    ["outside","밖에"],
+    ["food","음식"],
+    ["take","가지고 가다"],
+    ["borrow","빌리다"],
+    ["umbrella","우산"],
+    ["problem","문제"],
+    ["drink","마시다"],
+    ["excuse","실례"],
+    ["use","사용하다"],
+    ["bring","가져오다"],
+    ["later","나중에"],
+    ["fun","재미있는"]
+  ];
+  const PER_PERSON = 3;
+
+  const $ = (id) => document.getElementById(id);
+  const el = {
+    settingsBtn: $('settingsBtn'),
+
+    homeOverlay: $('homeOverlay'),
+    goCreateBtn: $('goCreateBtn'),
+    goSavedBtn: $('goSavedBtn'),
+    quickStartBtn: $('quickStartBtn'),
+
+    createOverlay: $('createOverlay'),
+    createFormTitle: $('createFormTitle'),
+    setNameInput: $('setNameInput'),
+    setGradeSelect: $('setGradeSelect'),
+    setPublisherSelect: $('setPublisherSelect'),
+    setCreatorInput: $('setCreatorInput'),
+    setPasswordInput: $('setPasswordInput'),
+    wordRowsWrap: $('wordRowsWrap'),
+    addWordRowBtn: $('addWordRowBtn'),
+    createErrorMsg: $('createErrorMsg'),
+    cancelCreateBtn: $('cancelCreateBtn'),
+    saveSetBtn: $('saveSetBtn'),
+
+    savedListOverlay: $('savedListOverlay'),
+    searchNameInput: $('searchNameInput'),
+    searchCreatorInput: $('searchCreatorInput'),
+    filterGrade: $('filterGrade'),
+    filterPublisher: $('filterPublisher'),
+    setList: $('setList'),
+    backHomeFromListBtn: $('backHomeFromListBtn'),
+
+    wordPreviewOverlay: $('wordPreviewOverlay'),
+    previewSetName: $('previewSetName'),
+    previewWordList: $('previewWordList'),
+    closePreviewBtn: $('closePreviewBtn'),
+
+    passwordOverlay: $('passwordOverlay'),
+    passwordPromptTitle: $('passwordPromptTitle'),
+    passwordPromptSub: $('passwordPromptSub'),
+    passwordPromptInput: $('passwordPromptInput'),
+    passwordErrorMsg: $('passwordErrorMsg'),
+    passwordConfirmBtn: $('passwordConfirmBtn'),
+    passwordCancelBtn: $('passwordCancelBtn'),
+
+    toastNote: $('toastNote'),
+
+    selectedSetTag: $('selectedSetTag'),
+    startOverlay: $('startOverlay'),
+    teamASizeInput: $('teamASizeInput'),
+    teamBSizeInput: $('teamBSizeInput'),
+    modeSelectStart: $('modeSelectStart'),
+    raceStartBtn: $('raceStartBtn'),
+    backToHomeFromStartBtn: $('backToHomeFromStartBtn'),
+    startErrorMsg: $('startErrorMsg'),
+
+    winnerOverlay: $('winnerOverlay'),
+    winnerEmoji: $('winnerEmoji'),
+    winnerTitle: $('winnerTitle'),
+    winnerSub: $('winnerSub'),
+    winRowA: $('winRowA'),
+    winRowB: $('winRowB'),
+    winTimeA: $('winTimeA'),
+    winTimeB: $('winTimeB'),
+    playAgainBtn: $('playAgainBtn'),
+    winnerHomeBtn: $('winnerHomeBtn'),
+  };
+
+  const panels = {
+    A: {
+      panel: $('panelA'), round: $('roundA'), timer: $('timerA'),
+      runner: $('runnerA'), promptLabel: $('promptLabelA'), word: $('wordA'),
+      options: $('optionsA'), doneOverlay: $('doneA'), doneTime: $('doneTimeA'),
+      nextPersonOverlay: $('nextPersonA'), nextPersonSub: $('nextPersonSubA'), nextPersonBtn: $('nextPersonBtnA'),
+    },
+    B: {
+      panel: $('panelB'), round: $('roundB'), timer: $('timerB'),
+      runner: $('runnerB'), promptLabel: $('promptLabelB'), word: $('wordB'),
+      options: $('optionsB'), doneOverlay: $('doneB'), doneTime: $('doneTimeB'),
+      nextPersonOverlay: $('nextPersonB'), nextPersonSub: $('nextPersonSubB'), nextPersonBtn: $('nextPersonBtnB'),
+    }
+  };
+
+  let words = DEFAULT_WORDS.slice();
+  let mode = 'ko2en';
+  let currentSetMeta = null; // {id,name,...} of the loaded saved set, or null = default words
+
+  function team(){
+    return {
+      size: 5,
+      totalRounds: 15,
+      queue: [],
+      idx: 0,
+      startTs: 0,
+      elapsedMs: 0,
+      finished: false,
+      timerHandle: null,
+      pausedAt: 0,
+    };
+  }
+  let A = team();
+  let B = team();
+
+  // ---------- helpers ----------
+  function shuffle(arr){
+    const a = arr.slice();
+    for(let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]]=[a[j],a[i]];
+    }
+    return a;
+  }
+  function buildQueue(rounds){
+    let q = [];
+    while(q.length < rounds){
+      let chunk = shuffle(words);
+      // avoid an immediate repeat across the chunk boundary
+      if(q.length && chunk.length > 1 && q[q.length-1][0] === chunk[0][0]){
+        [chunk[0], chunk[1]] = [chunk[1], chunk[0]];
+      }
+      q = q.concat(chunk);
+    }
+    return q.slice(0, rounds);
+  }
+  function fmtTime(ms){
+    const totalDeci = Math.floor(ms/100);
+    const min = Math.floor(totalDeci/600);
+    const sec = Math.floor((totalDeci%600)/10);
+    const deci = totalDeci%10;
+    return String(min).padStart(2,'0') + ':' + String(sec).padStart(2,'0') + '.' + deci;
+  }
+  function genId(){ return 'ws_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,7); }
+
+  // ---------- sound ----------
+  let audioCtx;
+  function beep(freq, dur, type){
+    try{
+      audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+      const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+      o.type = type||'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(); o.stop(audioCtx.currentTime+dur);
+    }catch(e){}
+  }
+  function soundCorrect(){ beep(660,0.1,'triangle'); setTimeout(()=>beep(880,0.12,'triangle'),80); }
+  function soundWrong(){ beep(180,0.15,'sawtooth'); }
+  function soundFinish(){ beep(523,0.14,'triangle'); setTimeout(()=>beep(659,0.14,'triangle'),130); setTimeout(()=>beep(784,0.22,'triangle'),260); }
+
+  function showToast(msg){
+    el.toastNote.textContent = msg;
+    el.toastNote.classList.add('show');
+    clearTimeout(el.toastNote._t);
+    el.toastNote._t = setTimeout(()=>el.toastNote.classList.remove('show'), 1600);
+  }
+
+  // ---------- screen navigation ----------
+  function hideAllOverlays(){
+    document.querySelectorAll('.stage-overlay').forEach(o => o.style.display = 'none');
+  }
+  function showOverlay(elRef){ hideAllOverlays(); elRef.style.display = 'flex'; }
+
+  function goHome(){ showOverlay(el.homeOverlay); }
+
+  el.settingsBtn.addEventListener('click', () => {
+    const raceStarted = (A.idx > 0 || B.idx > 0) && !(A.finished && B.finished);
+    if(raceStarted){
+      if(!confirm('진행 중인 게임 기록이 사라집니다. 홈 화면으로 이동할까요?')) return;
+      clearInterval(A.timerHandle); clearInterval(B.timerHandle);
+    }
+    goHome();
+  });
+  el.winnerHomeBtn.addEventListener('click', goHome);
+  el.backToHomeFromStartBtn.addEventListener('click', goHome);
+  el.quickStartBtn.addEventListener('click', () => {
+    currentSetMeta = null;
+    words = DEFAULT_WORDS.slice();
+    el.selectedSetTag.textContent = '선택된 세트: 기본 단어 세트';
+    showOverlay(el.startOverlay);
+  });
+
+  // ---------- storage helpers (Firebase Realtime Database) ----------
+  // Word sets are now stored in a shared online database (Firebase), so anyone who
+  // opens this site — on any computer — sees and can select the same saved sets.
+  // Editing/deleting is still gated by the per-set password (checked in-app), but note
+  // that isn't real server-side security; see the Realtime Database rules for that.
+  async function fetchAllSets(){
+    try{
+      const snap = await vocabDb.ref('wordsets').once('value');
+      const val = snap.val() || {};
+      const arr = Object.values(val);
+      arr.sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+      return arr;
+    }catch(e){
+      console.error('세트 목록을 불러오지 못했습니다', e);
+      return [];
+    }
+  }
+  async function saveSetToStorage(setObj){
+    try{
+      await vocabDb.ref('wordsets/' + setObj.id).set(setObj);
+      return true;
+    }catch(e){
+      console.error('저장 실패', e);
+      return false;
+    }
+  }
+  async function deleteSetFromStorage(id){
+    try{
+      await vocabDb.ref('wordsets/' + id).remove();
+      return true;
+    }catch(e){
+      console.error('삭제 실패', e);
+      return false;
+    }
+  }
+
+  // ---------- create / edit form ----------
+  let editingId = null;
+  const MAX_WORD_ROWS = 30;
+
+  function addWordRow(en, ko){
+    if(el.wordRowsWrap.children.length >= MAX_WORD_ROWS){
+      el.addWordRowBtn.disabled = true;
+      return;
+    }
+    const row = document.createElement('div');
+    row.className = 'word-row';
+    row.innerHTML =
+      '<input type="text" class="ko-input" placeholder="한글 뜻" value="' + (ko ? ko.replace(/"/g,'&quot;') : '') + '">' +
+      '<input type="text" class="en-input" placeholder="영어 단어" value="' + (en ? en.replace(/"/g,'&quot;') : '') + '">' +
+      '<button type="button" class="remove-row-btn" aria-label="단어 삭제">×</button>';
+    row.querySelector('.remove-row-btn').addEventListener('click', () => {
+      row.remove();
+      el.addWordRowBtn.disabled = el.wordRowsWrap.children.length >= MAX_WORD_ROWS;
+    });
+    el.wordRowsWrap.appendChild(row);
+    el.addWordRowBtn.disabled = el.wordRowsWrap.children.length >= MAX_WORD_ROWS;
+  }
+  el.addWordRowBtn.addEventListener('click', () => addWordRow('',''));
+
+  function collectWordsFromForm(){
+    return Array.from(el.wordRowsWrap.children).map(row => {
+      const ko = row.querySelector('.ko-input').value.trim();
+      const en = row.querySelector('.en-input').value.trim();
+      if(!en || !ko) return null;
+      return [en, ko];
+    }).filter(Boolean);
+  }
+
+  function openCreateForm(existingSet){
+    editingId = existingSet ? existingSet.id : null;
+    el.createFormTitle.textContent = existingSet ? '✏️ 단어세트 수정' : '📝 단어세트 만들기';
+    el.setNameInput.value = existingSet ? existingSet.name : '';
+    el.setGradeSelect.value = existingSet ? (existingSet.grade || '') : '';
+    el.setPublisherSelect.value = existingSet ? (existingSet.publisher || '') : '';
+    el.setCreatorInput.value = existingSet ? existingSet.creator : '';
+    el.setPasswordInput.value = existingSet ? existingSet.password : '';
+    el.createErrorMsg.style.display = 'none';
+    el.wordRowsWrap.innerHTML = '';
+    el.addWordRowBtn.disabled = false;
+    if(existingSet){
+      existingSet.words.forEach(w => addWordRow(w[0], w[1]));
+    } else {
+      for(let i=0;i<4;i++) addWordRow('','');
+    }
+    showOverlay(el.createOverlay);
+  }
+  el.goCreateBtn.addEventListener('click', () => openCreateForm(null));
+  el.cancelCreateBtn.addEventListener('click', goHome);
+
+  el.saveSetBtn.addEventListener('click', async () => {
+    const name = el.setNameInput.value.trim();
+    const creator = el.setCreatorInput.value.trim();
+    const password = el.setPasswordInput.value.trim();
+    const grade = el.setGradeSelect.value;
+    const publisher = el.setPublisherSelect.value;
+    const wordsCollected = collectWordsFromForm();
+
+    if(!name || !creator || !password || wordsCollected.length < 4){
+      el.createErrorMsg.style.display = 'block';
+      return;
+    }
+    el.createErrorMsg.style.display = 'none';
+
+    let existing = null;
+    if(editingId){
+      const all = await fetchAllSets();
+      existing = (all || []).find(s => s.id === editingId) || null;
+    }
+    const setObj = {
+      id: editingId || genId(),
+      name, grade, publisher, creator, password,
+      words: wordsCollected,
+      createdAt: existing ? existing.createdAt : Date.now(),
+      views: existing ? (existing.views || 0) : 0,
+    };
+    el.saveSetBtn.disabled = true;
+    const ok = await saveSetToStorage(setObj);
+    el.saveSetBtn.disabled = false;
+    if(!ok){
+      showToast('저장에 실패했어요. 다시 시도해주세요.');
+      return;
+    }
+    showToast('저장되었습니다!');
+    currentSetMeta = setObj;
+    words = setObj.words.slice();
+    el.selectedSetTag.textContent = '선택된 세트: ' + setObj.name;
+    showOverlay(el.startOverlay);
+  });
+
+  // ---------- saved list ----------
+  let allSetsCache = [];
+  async function openSavedList(){
+    showOverlay(el.savedListOverlay);
+    el.setList.innerHTML = '<div class="loading-text">불러오는 중...</div>';
+    allSetsCache = await fetchAllSets();
+    renderSetList();
+  }
+  el.goSavedBtn.addEventListener('click', openSavedList);
+  el.backHomeFromListBtn.addEventListener('click', goHome);
+
+  function renderSetList(){
+    const nameQ = el.searchNameInput.value.trim().toLowerCase();
+    const creatorQ = el.searchCreatorInput.value.trim().toLowerCase();
+    const gradeQ = el.filterGrade.value;
+    const pubQ = el.filterPublisher.value;
+
+    const filtered = allSetsCache.filter(s => {
+      if(nameQ && !s.name.toLowerCase().includes(nameQ)) return false;
+      if(creatorQ && !s.creator.toLowerCase().includes(creatorQ)) return false;
+      if(gradeQ && s.grade !== gradeQ) return false;
+      if(pubQ && s.publisher !== pubQ) return false;
+      return true;
+    });
+
+    if(filtered.length === 0){
+      el.setList.innerHTML = '<div class="empty-text">저장된 단어세트가 없어요. 새 단어세트를 만들어보세요!</div>';
+      return;
+    }
+    el.setList.innerHTML = '';
+    filtered.forEach(s => {
+      const card = document.createElement('div');
+      card.className = 'set-card';
+      const metaParts = [s.grade, s.publisher].filter(Boolean);
+      card.innerHTML =
+        '<div class="set-name"></div>' +
+        '<div class="set-meta"></div>' +
+        '<div class="set-actions">' +
+          '<button class="chip-btn c-select">✓ 선택</button>' +
+          '<button class="chip-btn c-view">👁 단어보기</button>' +
+          '<button class="chip-btn c-copy">📋 복사</button>' +
+          '<button class="chip-btn c-edit">✏️ 수정</button>' +
+          '<button class="chip-btn c-delete">🗑 삭제</button>' +
+        '</div>';
+      card.querySelector('.set-name').textContent = s.name;
+      card.querySelector('.set-meta').textContent =
+        (metaParts.length ? metaParts.join(' · ') + ' · ' : '') +
+        s.creator + ' · ' + s.words.length + '개 단어 · 조회 ' + (s.views||0);
+
+      card.querySelector('.c-select').addEventListener('click', async () => {
+        s.views = (s.views||0) + 1;
+        saveSetToStorage(s);
+        currentSetMeta = s;
+        words = s.words.slice();
+        el.selectedSetTag.textContent = '선택된 세트: ' + s.name;
+        showOverlay(el.startOverlay);
+      });
+      card.querySelector('.c-view').addEventListener('click', async () => {
+        s.views = (s.views||0) + 1;
+        saveSetToStorage(s);
+        openWordPreview(s);
+      });
+      card.querySelector('.c-copy').addEventListener('click', async () => {
+        const copyObj = {
+          id: genId(),
+          name: s.name + ' (복사본)',
+          grade: s.grade, publisher: s.publisher,
+          creator: s.creator, password: s.password,
+          words: s.words.slice(),
+          createdAt: Date.now(), views: 0,
+        };
+        const ok = await saveSetToStorage(copyObj);
+        if(ok){
+          showToast('복사되었습니다!');
+          openSavedList();
+        } else {
+          showToast('복사에 실패했어요.');
+        }
+      });
+      card.querySelector('.c-edit').addEventListener('click', () => {
+        promptPassword(s, '수정하려면 비밀번호를 입력해주세요.', () => openCreateForm(s));
+      });
+      card.querySelector('.c-delete').addEventListener('click', () => {
+        promptPassword(s, '삭제하려면 비밀번호를 입력해주세요.', async () => {
+          const ok = await deleteSetFromStorage(s.id);
+          if(ok){
+            showToast('삭제되었습니다.');
+            openSavedList();
+          } else {
+            showToast('삭제에 실패했어요.');
+          }
+        });
+      });
+      el.setList.appendChild(card);
+    });
+  }
+  [el.searchNameInput, el.searchCreatorInput, el.filterGrade, el.filterPublisher].forEach(input => {
+    input.addEventListener('input', renderSetList);
+    input.addEventListener('change', renderSetList);
+  });
+
+  function openWordPreview(s){
+    el.previewSetName.textContent = '📖 ' + s.name;
+    el.previewWordList.innerHTML = '';
+    s.words.forEach(w => {
+      const row = document.createElement('div');
+      row.className = 'set-card';
+      row.style.padding = '10px 14px';
+      row.innerHTML = '<div class="set-name" style="font-size:14px;"></div>';
+      row.querySelector('.set-name').textContent = w[1] + '  —  ' + w[0];
+      el.previewWordList.appendChild(row);
+    });
+    showOverlay(el.wordPreviewOverlay);
+  }
+  el.closePreviewBtn.addEventListener('click', () => showOverlay(el.savedListOverlay));
+
+  // ---------- password gate ----------
+  let pendingPasswordAction = null;
+  function promptPassword(set, subText, onSuccess){
+    pendingPasswordAction = { set, onSuccess };
+    el.passwordPromptSub.textContent = subText;
+    el.passwordPromptInput.value = '';
+    el.passwordErrorMsg.style.display = 'none';
+    showOverlay(el.passwordOverlay);
+  }
+  el.passwordConfirmBtn.addEventListener('click', () => {
+    if(!pendingPasswordAction) return;
+    if(el.passwordPromptInput.value === pendingPasswordAction.set.password){
+      const action = pendingPasswordAction.onSuccess;
+      pendingPasswordAction = null;
+      action();
+    } else {
+      el.passwordErrorMsg.style.display = 'block';
+    }
+  });
+  el.passwordCancelBtn.addEventListener('click', () => {
+    pendingPasswordAction = null;
+    showOverlay(el.savedListOverlay);
+  });
+
+  // ---------- race flow ----------
+  function resetPanelVisual(key){
+    const p = panels[key];
+    p.doneOverlay.classList.remove('show');
+    p.nextPersonOverlay.classList.remove('show');
+    p.runner.style.left = '3%';
+  }
+
+  function startRace(){
+    if(words.length < 4){
+      el.startErrorMsg.style.display = 'block';
+      return;
+
+    }
+    el.startErrorMsg.style.display = 'none';
+    const sizeA = Math.min(Math.max(parseInt(el.teamASizeInput.value,10)||1,1),30);
+    const sizeB = Math.min(Math.max(parseInt(el.teamBSizeInput.value,10)||1,1),30);
+    mode = el.modeSelectStart.value;
+
+    A = team(); B = team();
+    A.size = sizeA; A.totalRounds = sizeA*PER_PERSON;
+    B.size = sizeB; B.totalRounds = sizeB*PER_PERSON;
+    A.queue = buildQueue(A.totalRounds);
+    B.queue = buildQueue(B.totalRounds);
+
+    resetPanelVisual('A'); resetPanelVisual('B');
+    el.startOverlay.style.display = 'none';
+    el.winnerOverlay.style.display = 'none';
+
+    const now = Date.now();
+    A.startTs = now; B.startTs = now;
+    A.timerHandle = setInterval(()=>tickTimer('A'), 100);
+    B.timerHandle = setInterval(()=>tickTimer('B'), 100);
+
+    renderRound('A');
+    renderRound('B');
+  }
+
+  function tickTimer(key){
+    const t = key==='A'?A:B;
+    if(t.finished) return;
+    t.elapsedMs = Date.now() - t.startTs;
+    panels[key].timer.textContent = fmtTime(t.elapsedMs);
+  }
+
+  function updateMiniTrack(key){
+    const t = key==='A'?A:B;
+    const total = t.totalRounds || 1;
+    const pct = Math.min(t.idx/total,1) * 90 + 3;
+    panels[key].runner.style.left = pct + '%';
+  }
+
+  function renderRound(key){
+    const t = key==='A'?A:B;
+    const p = panels[key];
+    if(t.idx >= t.totalRounds){
+      finishTeam(key);
+      return;
+    }
+    const pair = t.queue[t.idx];
+    const promptIdx = mode === 'en2ko' ? 0 : 1;
+    const answerIdx = mode === 'en2ko' ? 1 : 0;
+    p.promptLabel.textContent = mode === 'en2ko' ? '이 단어의 뜻은?' : '이 뜻에 맞는 영어 단어는?';
+    p.word.textContent = pair[promptIdx];
+    p.word.className = 'prompt-word' + (mode === 'en2ko' ? ' en' : '');
+    p.round.textContent = (t.idx+1) + '/' + t.totalRounds + '번째';
+
+    const opts = shuffle(words.map(w => w[answerIdx]));
+    p.options.innerHTML = '';
+    opts.forEach(optText => {
+      const btn = document.createElement('button');
+      btn.className = 'opt-btn';
+      btn.textContent = optText;
+      btn.addEventListener('click', () => handleClick(key, btn, optText, pair[answerIdx]));
+      p.options.appendChild(btn);
+    });
+    updateMiniTrack(key);
+  }
+
+  function handleClick(key, btn, chosen, correctText){
+    const t = key==='A'?A:B;
+    if(t.finished) return;
+    if(chosen === correctText){
+      soundCorrect();
+      btn.classList.add('correct-flash');
+      Array.from(panels[key].options.children).forEach(b=>b.disabled=true);
+      t.idx += 1;
+
+      const personDone = t.idx < t.totalRounds && t.idx % PER_PERSON === 0;
+      setTimeout(()=>{
+        if(personDone){
+          showNextPerson(key);
+        } else {
+          renderRound(key);
+        }
+      }, 350);
+    } else {
+      soundWrong();
+      btn.classList.add('wrong-flash');
+      btn.disabled = true;
+      setTimeout(()=>{ btn.classList.remove('wrong-flash'); }, 400);
+    }
+  }
+
+  function showNextPerson(key){
+    const t = key==='A'?A:B;
+    const p = panels[key];
+    // pause this team's clock while they switch places at the board
+    clearInterval(t.timerHandle);
+    t.pausedAt = Date.now();
+    const finishedPersonNum = t.idx / PER_PERSON;
+    const upNextNum = finishedPersonNum + 1;
+    p.nextPersonSub.textContent = upNextNum + '번 주자, 준비됐나요?';
+    p.nextPersonOverlay.classList.add('show');
+  }
+
+  function resumeAfterNextPerson(key){
+    const t = key==='A'?A:B;
+    const p = panels[key];
+    if(t.finished) return;
+    p.nextPersonOverlay.classList.remove('show');
+    const pauseDuration = Date.now() - t.pausedAt;
+    t.startTs += pauseDuration;
+    t.timerHandle = setInterval(()=>tickTimer(key), 100);
+    renderRound(key);
+  }
+  panels.A.nextPersonBtn.addEventListener('click', () => resumeAfterNextPerson('A'));
+  panels.B.nextPersonBtn.addEventListener('click', () => resumeAfterNextPerson('B'));
+
+  function finishTeam(key){
+    const t = key==='A'?A:B;
+    const p = panels[key];
+    t.finished = true;
+    clearInterval(t.timerHandle);
+    t.elapsedMs = Date.now() - t.startTs;
+    p.timer.textContent = fmtTime(t.elapsedMs);
+    p.doneTime.textContent = fmtTime(t.elapsedMs);
+    p.doneOverlay.classList.add('show');
+    p.round.textContent = t.totalRounds + '/' + t.totalRounds + '번째';
+
+    if(A.finished && B.finished){
+      showWinner();
+    }
+  }
+
+  function showWinner(){
+    soundFinish();
+    el.winTimeA.textContent = fmtTime(A.elapsedMs);
+    el.winTimeB.textContent = fmtTime(B.elapsedMs);
+    el.winRowA.classList.remove('winner');
+    el.winRowB.classList.remove('winner');
+
+    if(A.elapsedMs < B.elapsedMs){
+      el.winnerTitle.textContent = '블루팀 승리! 🔵';
+      el.winnerSub.textContent = '블루팀이 더 빠르게 완주했어요';
+      el.winRowA.classList.add('winner');
+      el.winnerEmoji.textContent = '🏆';
+    } else if(B.elapsedMs < A.elapsedMs){
+      el.winnerTitle.textContent = '레드팀 승리! 🔴';
+      el.winnerSub.textContent = '레드팀이 더 빠르게 완주했어요';
+      el.winRowB.classList.add('winner');
+      el.winnerEmoji.textContent = '🏆';
+    } else {
+      el.winnerTitle.textContent = '무승부!';
+      el.winnerSub.textContent = '두 팀 모두 같은 시간에 완주했어요';
+      el.winnerEmoji.textContent = '🤝';
+    }
+    el.winnerOverlay.style.display = 'flex';
+  }
+
+  el.raceStartBtn.addEventListener('click', startRace);
+  el.playAgainBtn.addEventListener('click', () => {
+    showOverlay(el.startOverlay);
+  });
+
+  // init: show home screen
+  goHome();
+})();
+</script>
+
+</body>
+</html>
